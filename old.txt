@@ -1,0 +1,27 @@
+
+// app.listen(4000, () => {
+  //     console.log("Now listening on the port 4000")
+  // })
+  
+const express = require('express');
+const WebSocket = require('ws');
+const https = require('http');
+
+const app = express();
+const server = https.createServer(app);
+// const wss = new WebSocket.Server({ server });
+// "ws://localhost:8081/training/feedback" 
+const wss = new WebSocket.Server({ port: 8081, path: "/training/feedback" });
+
+wss.on('connection', connection = (ws) => {
+  ws.on('message', incoming = (message) => {
+    console.log('received: %s', message);
+    ws.send('a response');
+  });
+
+  ws.send('something');
+});
+
+server.listen(8080, () => {
+  console.log("How do the hell do I set up routes")
+})

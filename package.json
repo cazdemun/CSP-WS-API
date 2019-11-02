@@ -1,0 +1,24 @@
+{
+  "name": "csp-ws-api",
+  "version": "1.0.0",
+  "description": "API for CSP training using node, cortex (emotiv), express, websockets and some python scripts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cazdemun/CSP-WS-API.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cazdemun/CSP-WS-API/issues"
+  },
+  "homepage": "https://github.com/cazdemun/CSP-WS-API#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongoose": "^5.7.7",
+    "ws": "^7.2.0"
+  }
+}
