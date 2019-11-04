@@ -13,6 +13,10 @@ LICENSE_ID = "82a67d9d-b24b-4c11-a470-2868748a876b"
 # token (generate new one if the other expired)
 # appID
 
+# For SOLID principles, we put Cortex as a global variable
+# The relative path are execute respecting to root, btw, unless we use the sys path (adn even then)
+
+# mock data
 async def get_data():
     arr = np.random.randint(1000, size = 14)
     arr = arr / 100000000 * 4
@@ -69,22 +73,33 @@ async def save_trial():
   channel_types = [ 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg' ]
   sfreq = 128  # in Hertz
   montage = 'standard_1005'
+
   info = mne.create_info(channel_names, sfreq, channel_types, montage)
   info['description'] = 'Emotiv EPOC+ dataset obtainer from Cortex API'
 
   custom_raw = mne.io.RawArray(trial, info)
+  userid = sys.argv[1]
+  state = sys.argv[2]
+  # mock_mode = sys.argv[3]
+
+  # should add /data to file name
+  file_name = sys.argv[1] + "_" + sys.argv[2] + "_" + str(timestamp) + "_raw.fif"
 
   print(trial)
   print("Output from Python") 
   print("User ID:", sys.argv[1]) 
   print("State:", sys.argv[2]) 
   print("Timestamp:", timestamp)
-  print("File:", sys.argv[1] + "_" + sys.argv[2] + "_" + str(timestamp) + "_raw.fif")
+  print("File:", file_name)
 
-  file_name = sys.argv[1] + "_" + sys.argv[2] + "_" + str(timestamp) + "_raw.fif"
   custom_raw.save(file_name)
   await cortex.close_session()
 
 asyncio.run(save_trial())
 
-
+# def init():
+#   create Cortex object
+#   pass as argument to all the other funcitons
+#   init
+#   generate_trial
+#   save file

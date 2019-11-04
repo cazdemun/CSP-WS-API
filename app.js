@@ -3,7 +3,10 @@ const express = require('express');
 const WebSocket = require('ws');
 const mongoose = require('mongoose')
 const Profile = require('./models/profile')
+// Add some kind of logger as a dependency
+// Add env. variables so it can spit mocked data
 
+// This should be an env. variable
 const URI = "mongodb+srv://charles:adminfo2018@cluster0-jwsrk.mongodb.net/test?retryWrites=true&w=majority"
 
 mongoose.connect(URI)
@@ -34,9 +37,12 @@ app.post("/training/start",(req, res) => {
   } else { 
     Profile.findOne({ userid: req.body.userid })
     .then(p => {
-      let userid = p.userid;
-      let state = p.state + 1;
+      let userid = p.userid,
+        state = p.state + 1;
       let args = userid + " " + state
+      
+      // There are synchronization troubles, i.e. 
+      // this timestamp is 4 seconds earlier than the python script
       let timestamp = Math.floor(Date.now() / 1000);
 
       let spawn = require("child_process").spawn; 
@@ -44,6 +50,7 @@ app.post("/training/start",(req, res) => {
       
       process.stdout.on('data', data => {
         // Note: This is excuted at least three times
+        // Maybe can be solved printing just one time
         console.log(data.toString()); 
         // update
       }); 
@@ -56,7 +63,7 @@ app.post("/training/start",(req, res) => {
       p.state = p.state + 1
       p.timestamps.push(timestamp)
       
-      // Acto de fe en que no habran errores
+      // Acto de fe en que no habran errores en el script de python
       p.save()
       .then(_ => console.log("Updated"))
       .catch(err => console.log(err))
@@ -72,33 +79,12 @@ app.post("/training/start",(req, res) => {
 })
 
 // app.post("/training/mark",(req, res) => {
-//   res.send("Mark halfway")
+//   res.send("Mark halfway for annotations")
 // })
 
 // app.post("/training/confirm",(req, res) => {
-//   res.send("It did")
+//   res.send("There were no errors recording")
 // })
-
-const users = [
-  {
-    id: "mcegal",
-    state: 4,
-    protocol: 'graz',
-    timestamps: [ 1572648948, 1572648948, 1572668948, 1572678948 ]
-  },
-  {
-    id: "kjaenz",
-    state: 3,
-    protocol: 'graz',
-    timestamps: [ 1572648948, 1572658948, 1572668948 ]
-  },
-  {
-    id: "mcegal",
-    state: 2,
-    protocol: 'upc',
-    timestamps: [ 1572648948, 1572658948 ]
-  }
-]
 
 app.get("/user",(_, res) => {
   Profile.find({})
