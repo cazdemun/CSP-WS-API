@@ -7,106 +7,108 @@ import json
 import mne
 import matplotlib.pyplot as plt
 import logging
+import math
 
 LICENSE_ID = "82a67d9d-b24b-4c11-a470-2868748a876b"
-
-# put on cortex creds:
-# token (generate new one if the other expired)
-# appID
-
-# For SOLID principles, we put Cortex as a global variable
-# The relative path are execute respecting to root, btw, unless we use the sys path (adn even then)
+USERID = sys.argv[1]
+STATE = sys.argv[2]
+MOCK = sys.argv[3].lower() == 'true'
 
 channel_names = [ 'AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4' ]
 channel_types = [ 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg' ]
-sfreq = 128  # in Hertz
+sample_frequency = 128  # hertz
 montage = 'standard_1005'
 
 mnelogger = logging.getLogger('mne')
 mnelogger.setLevel(logging.WARNING)
 
-# mock data
 async def get_data():
-    arr = np.random.randint(1000, size = 14)
-    arr = arr / 100000000 * 4
-    return arr
+	# make this more readable
+	arr = np.random.randint(1000, size = 14)
+	arr = arr / (10 ** 8) * 4
+	arr = (arr * (10 ** 6)) + 4200
+	return arr
 
-async def init_cortex(cortex):
-    await cortex.authorize(license_id=LICENSE_ID,debit=50)
-    await cortex.query_headsets()
+async def init_cortex(creds):
+	'''
+	cortex.authorize token return should be stored and checked
+	cortex.queryheadsets should be also stored, since is the same id
 
-    if len(cortex.headsets) < 1:
-      return 0
+	cortex.create_session and cortex.create_record are still under study, they can remain,
+	but hopefully we'll only need cortex.subscribe with the right configuration
+	'''
+	if creds is None:
+		raise ValueError(f'No credentials found')
 
-    await cortex.create_session(activate=True, headset_id=cortex.headsets[0])
-    await cortex.create_record(title="emotiv raw test 1")
-    await cortex.subscribe(['eeg'])
+	cortex = Cortex(creds)
+	await cortex.authorize(license_id=LICENSE_ID,debit=50)
+	await cortex.query_headsets()
 
-async def generate_trial():
-    #cortex = Cortex('./cortex/cortex_creds')
-    #await init_cortex(cortex)
-    freq = 0.0078125 # sleep every freq sec 1 / 128
-    sps = int(1 / freq) # must be 128 samples per second
-    seconds = 8 # graz protocol trial duration
-    samples = int(seconds * sps)
-    trial = await get_data() # connect with cortex
-    # trial = await cortex.get_data() # connect with cortex
-    # trial = json.loads(trial)
-    # trial = trial['eeg'][2:16]
-    trial = np.reshape(trial, (14,-1))  
-    
-    now = datetime.now()
-    timestamp = datetime.timestamp(now)
+	if len(cortex.headsets) < 1:
+		raise ValueError(f'No headsets found')
 
-    print("Start recording...")
-    for i in range(0, samples):
-        await asyncio.sleep(freq)
-        temp_data = await get_data()
-        # temp_data = await cortex.get_data()
-        # temp_data = json.loads(temp_data)
-        # temp_data = temp_data['eeg'][2:16]
-        # print(temp_data)
-        trial = np.insert(trial, i + 1, temp_data, axis=1)
+	await cortex.create_session(activate=True,headset_id=cortex.headsets[0])
+	await cortex.create_record(title="emotiv raw trial")
+	await cortex.subscribe(['eeg'])
 
-    print("8 seconds has passed, saving...")
-    print("Channels: ", len(trial))
-    print("Shape: ", trial.shape)
-    # await cortex.close_session()
-    # return trial, int(timestamp), cortex
-    return trial, int(timestamp)
+	return cortex
 
+async def generate_trial(cortex=None):
+	sample_period = 0.0078125
+	sps = int(1 / sample_period)
+	seconds = 8
+	samples = int(seconds * sps)
 
-async def save_trial():
-  # trial, timestamp, cortex = await generate_trial()
-  trial, timestamp = await generate_trial()
-  print(trial)
-  info = mne.create_info(channel_names, sfreq, channel_types, montage)
-  info['description'] = 'Emotiv EPOC+ dataset obtainer from Cortex API'
+	trial = np.empty((14,1))
 
-  custom_raw = mne.io.RawArray(trial, info)
-  userid = sys.argv[1]
-  state = sys.argv[2]
-  # mock_mode = sys.argv[3]
+	print(f"Start recording... ")
 
-  # should add /data to file name
-  file_name = "../data/" + sys.argv[1] + "_" + sys.argv[2] + "_" + str(timestamp) + "_raw.fif"
-  # file_name = sys.argv[1] + "_" + sys.argv[2] + "_" + str(timestamp) + "_raw.fif"
+	for i in range(0,samples + 1):
+		if cortex is not None:
+			await asyncio.sleep(sample_period)
+			sample = await cortex.get_data()
+			sample = json.loads(sample)
+			sample = sample['eeg'][2:16]
+		else:  # mock data
+			sample = await get_data()
 
-  print(trial)
-  print(f"Output from Python:\n" 
-        f"\tUser ID: {userid}\n"
-        f"\tState: {state}\n"
-        f"\tTimestamp: {timestamp}\n"
-        f"\tFile: {file_name}\n")
+		trial = np.insert(trial, i + 1, sample, axis=1)
+	
+	trial = np.delete(trial, 0, 1)
 
-  custom_raw.save(file_name)
-  #await cortex.close_session()
+	print(f"{seconds} seconds had passed, data generated:\n"
+			f"\tChannels: {len(trial)}\n"
+			f"\tShape: {trial.shape}")
 
-asyncio.run(save_trial())
+	return trial
 
-# def init():
-#   create Cortex object
-#   pass as argument to all the other funcitons
-#   init
-#   generate_trial
-#   save file
+async def save_trial(trial, timestamp):
+	info = mne.create_info(channel_names, sample_frequency, channel_types, montage)
+	info['description'] = 'Emotiv EPOC+ dataset obtainer from Cortex API'
+
+	custom_raw = mne.io.RawArray(trial, info)
+
+	separator = "_"
+	extension = "raw.fif"
+	file_name = "./data/" + separator.join([USERID, STATE, str(timestamp), extension])
+
+	print(f"Saving this data:\n" 
+			f"\tUser ID: {USERID}\n"
+			f"\tState: {STATE}\n"
+			f"\tTimestamp: {timestamp}\n"
+			f"\tFile: {file_name}\n")
+
+	custom_raw.save(file_name)
+	return True
+
+async def execute(mock):
+	timestamp = datetime.timestamp(datetime.now())
+	if mock is False:
+		cortex = await init_cortex('./cortex/cortex_creds')
+		trial = await generate_trial(cortex)
+		await cortex.close_session()
+	else:
+		trial = await generate_trial()
+	result = await save_trial(trial, int(timestamp))
+
+asyncio.run(execute(mock=MOCK))
