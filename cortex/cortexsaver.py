@@ -6,6 +6,7 @@ from lib.cortex import Cortex
 import json
 import mne
 import matplotlib.pyplot as plt
+import logging
 
 LICENSE_ID = "82a67d9d-b24b-4c11-a470-2868748a876b"
 
@@ -15,6 +16,14 @@ LICENSE_ID = "82a67d9d-b24b-4c11-a470-2868748a876b"
 
 # For SOLID principles, we put Cortex as a global variable
 # The relative path are execute respecting to root, btw, unless we use the sys path (adn even then)
+
+channel_names = [ 'AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4' ]
+channel_types = [ 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg' ]
+sfreq = 128  # in Hertz
+montage = 'standard_1005'
+
+mnelogger = logging.getLogger('mne')
+mnelogger.setLevel(logging.WARNING)
 
 # mock data
 async def get_data():
@@ -34,16 +43,16 @@ async def init_cortex(cortex):
     await cortex.subscribe(['eeg'])
 
 async def generate_trial():
-    cortex = Cortex('./cortex/cortex_creds')
-    await init_cortex(cortex)
+    #cortex = Cortex('./cortex/cortex_creds')
+    #await init_cortex(cortex)
     freq = 0.0078125 # sleep every freq sec 1 / 128
     sps = int(1 / freq) # must be 128 samples per second
     seconds = 8 # graz protocol trial duration
     samples = int(seconds * sps)
-    # trial = await get_data() # connect with cortex
-    trial = await cortex.get_data() # connect with cortex
-    trial = json.loads(trial)
-    trial = trial['eeg'][2:16]
+    trial = await get_data() # connect with cortex
+    # trial = await cortex.get_data() # connect with cortex
+    # trial = json.loads(trial)
+    # trial = trial['eeg'][2:16]
     trial = np.reshape(trial, (14,-1))  
     
     now = datetime.now()
@@ -52,10 +61,10 @@ async def generate_trial():
     print("Start recording...")
     for i in range(0, samples):
         await asyncio.sleep(freq)
-        # temp_data = await get_data()
-        temp_data = await cortex.get_data()
-        temp_data = json.loads(temp_data)
-        temp_data = temp_data['eeg'][2:16]
+        temp_data = await get_data()
+        # temp_data = await cortex.get_data()
+        # temp_data = json.loads(temp_data)
+        # temp_data = temp_data['eeg'][2:16]
         # print(temp_data)
         trial = np.insert(trial, i + 1, temp_data, axis=1)
 
@@ -63,17 +72,14 @@ async def generate_trial():
     print("Channels: ", len(trial))
     print("Shape: ", trial.shape)
     # await cortex.close_session()
-    return trial, int(timestamp), cortex
+    # return trial, int(timestamp), cortex
+    return trial, int(timestamp)
 
 
 async def save_trial():
-  trial, timestamp, cortex = await generate_trial()
-  
-  channel_names = [ 'AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4' ]
-  channel_types = [ 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg', 'eeg' ]
-  sfreq = 128  # in Hertz
-  montage = 'standard_1005'
-
+  # trial, timestamp, cortex = await generate_trial()
+  trial, timestamp = await generate_trial()
+  print(trial)
   info = mne.create_info(channel_names, sfreq, channel_types, montage)
   info['description'] = 'Emotiv EPOC+ dataset obtainer from Cortex API'
 
@@ -83,17 +89,18 @@ async def save_trial():
   # mock_mode = sys.argv[3]
 
   # should add /data to file name
-  file_name = sys.argv[1] + "_" + sys.argv[2] + "_" + str(timestamp) + "_raw.fif"
+  file_name = "../data/" + sys.argv[1] + "_" + sys.argv[2] + "_" + str(timestamp) + "_raw.fif"
+  # file_name = sys.argv[1] + "_" + sys.argv[2] + "_" + str(timestamp) + "_raw.fif"
 
   print(trial)
-  print("Output from Python") 
-  print("User ID:", sys.argv[1]) 
-  print("State:", sys.argv[2]) 
-  print("Timestamp:", timestamp)
-  print("File:", file_name)
+  print(f"Output from Python:\n" 
+        f"\tUser ID: {userid}\n"
+        f"\tState: {state}\n"
+        f"\tTimestamp: {timestamp}\n"
+        f"\tFile: {file_name}\n")
 
   custom_raw.save(file_name)
-  await cortex.close_session()
+  #await cortex.close_session()
 
 asyncio.run(save_trial())
 

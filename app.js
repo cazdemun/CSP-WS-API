@@ -42,7 +42,7 @@ app.post("/training/start",(req, res) => {
       let args = userid + " " + state
       
       // There are synchronization troubles, i.e. 
-      // this timestamp is 4 seconds earlier than the python script
+      // this timestamp is approx 4 seconds earlier than the python script
       let timestamp = Math.floor(Date.now() / 1000);
 
       let spawn = require("child_process").spawn; 

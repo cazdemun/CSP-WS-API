@@ -1,3 +1,8 @@
+'''
+The purpose of a new version is to make more readable
+and just have the barely necessary methods to work with.
+'''
+
 ############
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,6 +36,48 @@ logger.addHandler(logging.StreamHandler())
 
 class CortexApiException(Exception):
     pass
+
+
+class ErrorHandler():
+  def __init__(self, a):
+    self.a = a
+
+
+class CortexData():
+  CORTEX_URL = "wss://localhost:6868"
+  
+  def __init__(self, credentials_path):
+    self.client_id, self.client_secret, self.auth_token = self.parse_credentials(credentials_path)
+    self.websocket = None
+    self.packet_count = 0
+    self.id_sequence = 0
+
+def parse_credentials(self, credentials_path):
+    client_id = None
+    client_secret = None
+    auth_token = None
+    
+    if not os.path.exists(credentials_path):
+      raise OSError(f"no such file: {credentials_path}")
+
+    with open(credentials_path, 'r') as credentials_file:
+      for line in credentials_file:
+        if line.startswith('#'):
+          continue
+        (key, val) = line.split(' ')
+        if key == 'client_id':
+          client_id = val.strip()
+        elif key == 'client_secret':
+          client_secret = val.strip()
+        elif key == 'auth_token':
+          auth_token = val.strip()
+        else:
+          raise ValueError(f'Found invalid key "{key}" while parsing client_id file {credentials_path}')
+
+    if not client_id or not client_secret or not auth_token:
+      raise ValueError(f"Did not find expected keys in client_id file {credentials_path}")  
+
+    return client_id, client_secret, auth_token
 
 class Cortex(object):
     CORTEX_URL = "wss://localhost:6868"
@@ -116,31 +163,13 @@ class Cortex(object):
         return request
 
     async def init_connection(self):
-        ''' Open a websocket and connect to cortex.  '''
-        # Cortex is running locally; data is encrypted, but the certificate is
-        # self-signed.
-        ssl_context = ssl.create_default_context()
-        ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE
+      ssl_context = ssl.create_default_context()
+      ssl_context.check_hostname = False
+      ssl_context.verify_mode = ssl.CERT_NONE
 
-        self.websocket = await websockets.connect(
-            self.CORTEX_URL, ssl=ssl_context)
+      self.websocket = await websockets.connect(self.CORTEX_URL, ssl=ssl_context)
 
     async def send_command(self, method, auth=True, callback=None, **kwargs):
-        '''
-        Send a command to cortex.
-
-        Parameters:
-            method: the cortex method to call as a string
-            auth: boolean to indicate whether or not authentication is
-                required for this method (may generate an additional call to
-                authorize())
-            callback: function to be called with the response data; defaults
-                to returning the response data
-            **kwargs: all other keyword arguments become parameters in the
-                request to cortex.
-        Returns: response as dictionary
-        '''
         if not self.websocket:
             await self.init_connection()
         if auth and not self.auth_token:
