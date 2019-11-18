@@ -168,9 +168,9 @@ class Cortex(object):
         self.packet_count += 1
         return resp
 
-    def close(self):
+    async def close(self):
         ''' Close the cortex connection '''
-        self.websocket.close()
+        await self.websocket.close()
 
     ##
     # Here down are cortex specific commands
@@ -293,6 +293,7 @@ class Cortex(object):
         resp = await self.send_command('createSession', **params)
         self.session_id = resp['result']['id']
         logger.debug(f"{__name__} resp:\n{resp}")
+        print(f"Session created - cortex.py")
 
     async def close_session(self):
         params = {'cortexToken': self.auth_token,
