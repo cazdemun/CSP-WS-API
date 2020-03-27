@@ -79,8 +79,16 @@ info = classifier.train("charls")
 print(json.dumps(info))
 
 print("Starting emotiv", flush=True)
-emotiv = Mock('./cortex/cortex_creds')  
-# emotiv = Emotiv('./cortex/cortex_creds')  
+if len(sys.argv) < 2:
+  print("Mode argument missing, mock connection initiating")
+  emotiv = Mock('./cortex/cortex_creds')  
+elif sys.argv[1] == "cortex":
+  emotiv = Emotiv('./cortex/cortex_creds')  
+elif sys.argv[1] == "mock":
+  print("Mock connection initiated")
+  emotiv = Mock('./cortex/cortex_creds')  
+else:
+  print("Invalid mode argument")
 # Not sure of side effects
 asyncio.get_event_loop().run_until_complete(emotiv.open_connection())
 

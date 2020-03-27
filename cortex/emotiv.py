@@ -21,7 +21,7 @@ async def _get_data(cortex):
     sample = sample['eeg'][2:16]
   except:
     print("Not an eeg sample!")
-    sample = _get_data(cortex)
+    sample = await _get_data(cortex)
   return sample
 
 async def record_data(seconds, cortex=None):
@@ -44,6 +44,8 @@ async def record_data(seconds, cortex=None):
   print(t1 - t0)
   record = np.delete(record, 0, 1)
   return record
+
+  ############################################################################
 
 class Emotiv():
   def __init__(self, credentials):
