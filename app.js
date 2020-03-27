@@ -9,7 +9,11 @@ dotenv.config();
 
 // Add some kind of logger as a dependency
 
-mongoose.connect(process.env.ATLAS_URI, {
+PORT=4000
+WS_PORT=8081
+ATLAS_URI="mongodb+srv://charles:adminfo2018@cluster0-jwsrk.mongodb.net/test?retryWrites=true&w=majority"
+
+mongoose.connect(ATLAS_URI, {
   useCreateIndex: true,
   useUnifiedTopology: true,
   useNewUrlParser: true
@@ -214,6 +218,6 @@ app.post("/users/:userid", (req, res) => {
   // delete user or delete last timestamp
 })
 
-app.listen(process.env.PORT, () => {
-  console.log(`Now listening on the port ${process.env.PORT}`)
+app.listen(PORT, () => {
+  console.log(`Now listening on the port ${PORT}`)
 })
