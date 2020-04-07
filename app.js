@@ -9,6 +9,7 @@ dotenv.config();
 
 // Add some kind of logger as a dependency
 
+// .env file bug on prod
 PORT=4000
 WS_PORT=8081
 ATLAS_URI="mongodb+srv://charles:adminfo2018@cluster0-jwsrk.mongodb.net/test?retryWrites=true&w=majority"
@@ -91,7 +92,7 @@ var corsOptions = {
 
 
 const app = express();
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 app.use((req, res, next) => {
   console.log('\x1b[36m%s\x1b[0m', `${req.method} ${req.originalUrl}`);
