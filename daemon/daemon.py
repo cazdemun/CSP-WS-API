@@ -78,6 +78,7 @@ classifier = Classifier()
 info = classifier.train("charls")
 print(json.dumps(info))
 
+emotiv = Mock('./cortex/cortex_creds')  
 print("Starting emotiv", flush=True)
 if len(sys.argv) < 2:
   print("Mode argument missing, mock connection initiating")
