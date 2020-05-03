@@ -1,17 +1,5 @@
 from pymongo import MongoClient
 
-
-class Identity:
-
-    def __init__(self, x):
-        self.x = x
-
-    def map(self, f):
-        return Identity(f(self.x))
-
-    def fold(self, f):
-        return f(self.x)
-
 # conda install -c anaconda pymongo
 # pip3 install pymongo[srv]
 
