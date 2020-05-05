@@ -18,7 +18,7 @@ git push
 # Deploying
 
 ssh -tt -i /home/charles/.ssh/amazon-tesis.pem ubuntu@18.219.150.69 << EOF
-cd apps/bci-backend
+cd apps/bci-back-end
 git config --global credential.helper 'cache --timeout=86400'
 git pull
 pm2 restart server.py
