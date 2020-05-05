@@ -11,8 +11,12 @@ On console number two
 
     nodemon app
 
+# ADICCPIAEV REST-WS API v2
+
+    python server.py
+
 # Knowledge Diagram
 
 > Note: For the next version add front-end technologies
 
-![alt](/images/notes_topology_v1.0.jpg)
+![alt](/docs/notes_topology_v1.0.jpg)
