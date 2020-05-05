@@ -57,5 +57,6 @@ async def ws():
 
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().create_task(app.run())
-    asyncio.get_event_loop().run_forever()
+    app.run()
+    # asyncio.get_event_loop().create_task(app.run())
+    # asyncio.get_event_loop().run_forever()
