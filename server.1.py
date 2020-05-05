@@ -1,16 +1,21 @@
-import db
-import asyncio
-
 from quart import Quart, websocket, request, jsonify
+# from flask import Flask, request, jsonify
+# from flask_socketio import SocketIO, emit
 
 from monads.utils import propT, eitherToTask, zipList
 from monads.task import Task
 from monads.list import List
 
+# import asyncio
+# import websockets
+
+import db
 
 app = Quart(__name__)
+# app = Flask(__name__)
+# app.config['SECRET_KEY'] = 'mysecret'
+# socketio = SocketIO(app,cors_allowed_origins=['localhost'])
 PREFIX = "/api/v2" # https://stackoverflow.com/questions/18967441/add-a-prefix-to-all-flask-routes
-
 
 @app.route('/')
 async def index():
@@ -45,17 +50,38 @@ async def tasks(username : str):
     else:
         return jsonify(tasks=[]), 200
 
-@app.websocket('/ws/feedback')
+@app.websocket('/ws')
 async def ws():
     websocket.headers
     while True:
         try:
             data = await websocket.receive()
-            await websocket.send(f"Echo {data} right or left or forward")
+            await websocket.send(f"Echo {data}")
         except asyncio.CancelledError:
-            print("someone disconnected")
+            # Handle disconnect
+            raise
 
+# @socketio.on('message')
+# def test_disconnect(msg):
+#     print(msg)
+
+# async def handleMessage(message, websocket):
+#     print(message)
+#     await websocket.send(message)
+
+# async def echo(websocket, path):
+#   print(f"Someone connected")
+#   await websocket.send("Connected to server")
+#   try:
+#     async for message in websocket:
+#       await handleMessage(message, websocket)
+#   except:
+#     print("Someone disconnected")
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().create_task(app.run())
-    asyncio.get_event_loop().run_forever()
+    print("Starting server")
+    # asyncio.get_event_loop().run_until_complete(websockets.serve(echo, 'localhost', 8765))
+    # asyncio.get_event_loop().run_until_complete(app.run(debug=True))
+    # asyncio.get_event_loop().run_forever()
+    # socketio.run(app, debug=True, log_output= True)
+    app.run()
