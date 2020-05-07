@@ -1,5 +1,5 @@
 import db
-import asyncio
+# import asyncio
 
 from quart import Quart, websocket, request, jsonify
 
@@ -45,13 +45,17 @@ async def tasks(username : str):
     else:
         return jsonify(tasks=[]), 200
 
+import random
+
 @app.websocket('/ws/feedback')
 async def ws():
     websocket.headers
     while True:
         try:
             data = await websocket.receive()
-            await websocket.send(f"Echo {data} right or left or forward")
+            movements = ["right", "left", "forward"]
+            # await websocket.send(f"Echo {data} right or left or forward")
+            await websocket.send(f"{{ 'movement': {random.choice(movements)}, 'classifier': 'csp/lda', model: 'someid', 'emotiv': 'mock'}})
         except asyncio.CancelledError:
             print("someone disconnected")
 

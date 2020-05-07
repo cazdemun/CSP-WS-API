@@ -7,6 +7,7 @@ from toolz import curry
 
 # Either helpers
 
+
 def fromNullable(x) -> (Either, None, 'x'):
     return Left(None) if x is None else Right(x)
 
@@ -35,6 +36,9 @@ def propT(jsonDict, field):
     """
     res = jsonDict.get(field, None)
     return Left(f'field {field} not found') if res is None else Right(res)
+    # return tryCatchTag("invalid dictionary", jsonDict.get(field, None))
+    # .fold(lambda e: Left(e),
+    #       lambda p: Left(f'field {field} not found') if p is None else Right(p))
 
 
 def tryCatch(f) -> (Either, str, 'x'):
